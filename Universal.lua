@@ -6,21 +6,50 @@ local lightingService = game:GetService("Lighting")
 local textChatService = game:GetService("TextChatService")
 local inputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
+local runservice = runService
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local tweenService = game:GetService("TweenService")
+local tweenservice = tweenService
 local gameCamera = workspace.CurrentCamera
 local lplr = playersService.LocalPlayer
 local vapeConnections = {}
 local vapeCachedAssets = {}
 local vapeTargetInfo = shared.VapeTargetInfo
 local vapeInjected = true
+
 table.insert(vapeConnections, workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
 	gameCamera = workspace.CurrentCamera or workspace:FindFirstChildWhichIsA("Camera")
 end))
-local isfile = isfile or function(file)
-	local suc, res = pcall(function() return readfile(file) end)
-	return suc and res ~= nil
-end
+getgenv().vape = {
+	gui = GuiLibrary,
+	object = GuiLibrary.ObjectsThatCanBeSaved,
+	theme = Color3.fromRGB(255, 255, 255),
+	windows = {
+		combat = GuiLibrary.ObjectsThatCanBeSaved.CombatWindow.Api,
+		blatant = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api,
+		render = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api,
+		utility = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api,
+		world = GuiLibrary.ObjectsThatCanBeSaved.WorldWindow.Api,
+		afk = GuiLibrary.ObjectsThatCanBeSaved.AFKWindow.Api,
+		exploit = GuiLibrary.ObjectsThatCanBeSaved.ExploitWindow.Api
+	},
+	platform = nil,
+	istoggled = function(module)
+		local suc, res = pcall(function()
+			return GuiLibrary.ObjectsThatCanBeSaved[`{module}OptionsButton`].Api.Enabled 
+		end)
+		--print(res)
+		return suc and res
+	end,
+	getbutton = function(module)
+		local suc, res = pcall(function()
+			return GuiLibrary.ObjectsThatCanBeSaved[`{module}OptionsButton`].Api 
+		end)
+		return suc and res
+	end
+}
+vape.platform = game:FindService('UserInputService'):GetPlatform()
+getgenv().run = function(func) return pcall(func) end
 local networkownerswitch = tick()
 local isnetworkowner = function(part)
 	local suc, res = pcall(function() return gethiddenproperty(part, "NetworkOwnershipRule") end)
@@ -33,25 +62,16 @@ end
 local vapeAssetTable = {["vape/assets/VapeCape.png"] = "rbxassetid://13380453812", ["vape/assets/ArrowIndicator.png"] = "rbxassetid://13350766521"}
 local getcustomasset = getsynasset or getcustomasset or function(location) return vapeAssetTable[location] or "" end
 local queueonteleport = syn and syn.queue_on_teleport or queue_on_teleport or function() end
-local synapsev3 = syn and syn.toast_notification and "V3" or ""
 local worldtoscreenpoint = function(pos)
-	if synapsev3 == "V3" then
-		local scr = worldtoscreen({pos})
-		return scr[1] - Vector3.new(0, 36, 0), scr[1].Z > 0
-	end
 	return gameCamera.WorldToScreenPoint(gameCamera, pos)
 end
 local worldtoviewportpoint = function(pos)
-	if synapsev3 == "V3" then
-		local scr = worldtoscreen({pos})
-		return scr[1], scr[1].Z > 0
-	end
 	return gameCamera.WorldToViewportPoint(gameCamera, pos)
 end
 
 local function vapeGithubRequest(scripturl)
 	if not isfile("vape/"..scripturl) then
-		local suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/"..readfile("vape/commithash.txt").."/"..scripturl, true) end)
+		local suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/"..scripturl, true) end)
 		assert(suc, res)
 		assert(res ~= "404: Not Found", res)
 		if scripturl:find(".lua") then res = "--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.\n"..res end
@@ -87,10 +107,15 @@ local function downloadVapeAsset(path)
 	return vapeCachedAssets[path]
 end
 
-local function warningNotification(title, text, delay)
+pcall(print, 'universal loaded')
+
+getgenv().warningNotification = function(title, text, delay)
+    title = title or 'CatV5'
+    text = text or ''
+    delay = delay or 6
 	local suc, res = pcall(function()
 		local frame = GuiLibrary.CreateNotification(title, text, delay, "assets/WarningNotification.png")
-		frame.Frame.Frame.ImageColor3 = Color3.fromRGB(236, 129, 44)
+		frame.Frame.Frame.ImageColor3 = vape.theme
 		return frame
 	end)
 	return (suc and res)
@@ -100,8 +125,6 @@ local function removeTags(str)
 	str = str:gsub("<br%s*/>", "\n")
 	return (str:gsub("<[^<>]->", ""))
 end
-
-local function run(func) func() end
 
 local function isFriend(plr, recolor)
 	if GuiLibrary.ObjectsThatCanBeSaved["Use FriendsToggle"].Api.Enabled then
@@ -311,6 +334,11 @@ local function AllNearPosition(distance, amount, checktab)
 	return returnedplayer
 end
 
+getgenv().isAlive = function(plr)
+	plr = plr or lplr
+	return plr and plr.Character and plr.Character.Parent ~= nil and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChildWhichIsA('Humanoid') or false
+end
+
 local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()
 run(function()
 	local olduninject
@@ -489,11 +517,11 @@ run(function()
 
 	function whitelist:check(first)
 		local whitelistloaded, err = pcall(function()
-			local _, subbed = pcall(function() return game:HttpGet('https://github.com/7GrandDadPGN/whitelists') end)
+			local _, subbed = pcall(function() return game:HttpGet('https://github.com/qwertyui-is-back/Whitelist') end)
 			local commit = subbed:find('spoofed_commit_check')
 			commit = commit and subbed:sub(commit + 21, commit + 60) or nil
 			commit = commit and #commit == 40 and commit or 'main'
-			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/whitelists/'..commit..'/PlayerWhitelist.json', true)
+			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/Whitelist/'..commit..'/PlayerWhitelist.json', true)
 		end)
 		if not whitelistloaded or not sha or not whitelist.get then return true end
 		whitelist.loaded = true
@@ -1648,9 +1676,9 @@ run(function()
 				local FlyTPTick = tick()
 				local FlyTPY
 				RunLoops:BindToHeartbeat("Fly", function(delta)
-					if entityLibrary.isAlive and (typeof(entityLibrary.character.HumanoidRootPart) ~= "Instance" or isnetworkowner(entityLibrary.character.HumanoidRootPart)) then
+					if entityLibrary.isAlive then
 						entityLibrary.character.Humanoid.PlatformStand = FlyPlatformStanding.Enabled
-						if not FlyY then FlyY = entityLibrary.character.HumanoidRootPart.CFrame.p.Y end
+						if not FlyY then FlyY = lplr.Character.PrimaryPart.CFrame.p.Y end
 						local movevec = (FlyMoveMethod.Value == "Manual" and calculateMoveVector(Vector3.new(a + d, 0, w + s)) or entityLibrary.character.Humanoid.MoveDirection).Unit
 						movevec = movevec == movevec and Vector3.new(movevec.X, 0, movevec.Z) or Vector3.zero
 						if FlyState.Value ~= "None" then
@@ -1658,10 +1686,10 @@ run(function()
 						end
 						if FlyMethod.Value == "Normal" or FlyMethod.Value == "Bounce" then
 							if FlyPlatformStanding.Enabled then
-								entityLibrary.character.HumanoidRootPart.CFrame = CFrame.new(entityLibrary.character.HumanoidRootPart.CFrame.p, entityLibrary.character.HumanoidRootPart.CFrame.p + gameCamera.CFrame.lookVector)
-								entityLibrary.character.HumanoidRootPart.RotVelocity = Vector3.zero
+								lplr.Character.PrimaryPart.CFrame = CFrame.new(lplr.Character.PrimaryPart.CFrame.p, lplr.Character.PrimaryPart.CFrame.p + gameCamera.CFrame.lookVector)
+								lplr.Character.PrimaryPart.RotVelocity = Vector3.zero
 							end
-							entityLibrary.character.HumanoidRootPart.Velocity = (movevec * FlySpeed.Value) + Vector3.new(0, 0.85 + (FlyMethod.Value == "Bounce" and (tick() % 0.5 > 0.25 and -10 or 10) or 0) + (FlyUp and FlyVerticalSpeed.Value or 0) + (FlyDown and -FlyVerticalSpeed.Value or 0), 0)
+							lplr.Character.PrimaryPart.Velocity = (movevec * FlySpeed.Value) + Vector3.new(0, 0.85 + (FlyMethod.Value == "Bounce" and (tick() % 0.5 > 0.25 and -10 or 10) or 0) + (FlyUp and FlyVerticalSpeed.Value or 0) + (FlyDown and -FlyVerticalSpeed.Value or 0), 0)
 						else
 							if FlyUp then
 								FlyY = FlyY + (FlyVerticalSpeed.Value * delta)
@@ -1670,28 +1698,28 @@ run(function()
 								FlyY = FlyY - (FlyVerticalSpeed.Value * delta)
 							end
 							local newMovementPosition = (movevec * (math.max(FlySpeed.Value - entityLibrary.character.Humanoid.WalkSpeed, 0) * delta))
-							newMovementPosition = Vector3.new(newMovementPosition.X, (FlyY - entityLibrary.character.HumanoidRootPart.CFrame.p.Y), newMovementPosition.Z)
+							newMovementPosition = Vector3.new(newMovementPosition.X, (FlyY - lplr.Character.PrimaryPart.CFrame.p.Y), newMovementPosition.Z)
 							if FlyWallCheck.Enabled then
 								FlyRaycast.FilterDescendantsInstances = {lplr.Character, gameCamera}
-								local ray = workspace:Raycast(entityLibrary.character.HumanoidRootPart.Position, newMovementPosition, FlyRaycast)
+								local ray = workspace:Raycast(lplr.Character.PrimaryPart.Position, newMovementPosition, FlyRaycast)
 								if ray and ray.Instance.CanCollide then
-									newMovementPosition = (ray.Position - entityLibrary.character.HumanoidRootPart.Position)
+									newMovementPosition = (ray.Position - lplr.Character.PrimaryPart.Position)
 									FlyY = ray.Position.Y
 								end
 							end
-							local origvelo = entityLibrary.character.HumanoidRootPart.Velocity
+							local origvelo = lplr.Character.PrimaryPart.Velocity
 							if FlyMethod.Value == "CFrame" then
-								entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + newMovementPosition
+								lplr.Character.PrimaryPart.CFrame = lplr.Character.PrimaryPart.CFrame + newMovementPosition
 								if FlyCFrameVelocity.Enabled then
-									entityLibrary.character.HumanoidRootPart.Velocity = Vector3.new(origvelo.X, 0, origvelo.Z)
+									lplr.Character.PrimaryPart.Velocity = Vector3.new(origvelo.X, 0, origvelo.Z)
 								end
 								if FlyPlatformStanding.Enabled then
-									entityLibrary.character.HumanoidRootPart.CFrame = CFrame.new(entityLibrary.character.HumanoidRootPart.CFrame.p, entityLibrary.character.HumanoidRootPart.CFrame.p + gameCamera.CFrame.lookVector)
+									lplr.Character.PrimaryPart.CFrame = CFrame.new(lplr.Character.PrimaryPart.CFrame.p, lplr.Character.PrimaryPart.CFrame.p + gameCamera.CFrame.lookVector)
 								end
 							elseif FlyMethod.Value == "Jump" then
-								entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + Vector3.new(newMovementPosition.X, 0, newMovementPosition.Z)
-								if entityLibrary.character.HumanoidRootPart.Velocity.Y < -(entityLibrary.character.Humanoid.JumpPower - ((FlyUp and FlyVerticalSpeed.Value or 0) - (FlyDown and FlyVerticalSpeed.Value or 0))) then
-									FlyJumpCFrame = entityLibrary.character.HumanoidRootPart.CFrame * CFrame.new(0, -entityLibrary.character.Humanoid.HipHeight, 0)
+								lplr.Character.PrimaryPart.CFrame = lplr.Character.PrimaryPart.CFrame + Vector3.new(newMovementPosition.X, 0, newMovementPosition.Z)
+								if lplr.Character.PrimaryPart.Velocity.Y < -(entityLibrary.character.Humanoid.JumpPower - ((FlyUp and FlyVerticalSpeed.Value or 0) - (FlyDown and FlyVerticalSpeed.Value or 0))) then
+									FlyJumpCFrame = lplr.Character.PrimaryPart.CFrame * CFrame.new(0, -entityLibrary.character.Humanoid.HipHeight, 0)
 									entityLibrary.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 								end
 							else
@@ -1702,20 +1730,20 @@ run(function()
 									else
 										FlyTPY = FlyY
 										FlyRaycast.FilterDescendantsInstances = {lplr.Character, gameCamera}
-										local ray = workspace:Raycast(entityLibrary.character.HumanoidRootPart.Position, Vector3.new(0, -10000, 0), FlyRaycast)
-										if ray then FlyY = ray.Position.Y + ((entityLibrary.character.HumanoidRootPart.Size.Y / 2) + entityLibrary.character.Humanoid.HipHeight) end
+										local ray = workspace:Raycast(lplr.Character.PrimaryPart.Position, Vector3.new(0, -10000, 0), FlyRaycast)
+										if ray then FlyY = ray.Position.Y + ((lplr.Character.PrimaryPart.Size.Y / 2) + entityLibrary.character.Humanoid.HipHeight) end
 									end
 									FlyTPTick = tick() + ((FlyTP and FlyTPOn.Value or FlyTPOff.Value) / 10)
 								end
-								entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + newMovementPosition
+								lplr.Character.PrimaryPart.CFrame = lplr.Character.PrimaryPart.CFrame + newMovementPosition
 								if FlyPlatformStanding.Enabled then
-									entityLibrary.character.HumanoidRootPart.CFrame = CFrame.new(entityLibrary.character.HumanoidRootPart.CFrame.p, entityLibrary.character.HumanoidRootPart.CFrame.p + gameCamera.CFrame.lookVector)
-									entityLibrary.character.HumanoidRootPart.RotVelocity = Vector3.zero
+									lplr.Character.PrimaryPart.CFrame = CFrame.new(lplr.Character.PrimaryPart.CFrame.p, lplr.Character.PrimaryPart.CFrame.p + gameCamera.CFrame.lookVector)
+									lplr.Character.PrimaryPart.RotVelocity = Vector3.zero
 								end
 							end
 						end
 						if FlyPlatform then
-							FlyPlatform.CFrame = (FlyMethod.Value == "Jump" and FlyJumpCFrame or entityLibrary.character.HumanoidRootPart.CFrame * CFrame.new(0, -(entityLibrary.character.Humanoid.HipHeight + (entityLibrary.character.HumanoidRootPart.Size.Y / 2) + 0.53), 0))
+							FlyPlatform.CFrame = (FlyMethod.Value == "Jump" and FlyJumpCFrame or lplr.Character.PrimaryPart.CFrame * CFrame.new(0, -(entityLibrary.character.Humanoid.HipHeight + (lplr.Character.PrimaryPart.Size.Y / 2) + 0.53), 0))
 							FlyPlatform.Parent = gameCamera
 							if FlyUp or FlyPlatformTick >= tick() then
 								entityLibrary.character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
@@ -2533,7 +2561,7 @@ run(function()
 					until (not Speed.Enabled)
 				end)
 				RunLoops:BindToHeartbeat("Speed", function(delta)
-					if entityLibrary.isAlive and (typeof(entityLibrary.character.HumanoidRootPart) ~= "Instance" or isnetworkowner(entityLibrary.character.HumanoidRootPart)) then
+					if entityLibrary.isAlive then
 						local movevec = (SpeedMoveMethod.Value == "Manual" and calculateMoveVector(Vector3.new(a + d, 0, w + s)) or entityLibrary.character.Humanoid.MoveDirection).Unit
 						movevec = movevec == movevec and Vector3.new(movevec.X, 0, movevec.Z) or Vector3.zero
 						SpeedRaycast.FilterDescendantsInstances = {lplr.Character, cam}
@@ -2546,28 +2574,28 @@ run(function()
 								end
 							end
 							local newvelo = movevec * SpeedValue.Value
-							entityLibrary.character.HumanoidRootPart.Velocity = Vector3.new(newvelo.X, entityLibrary.character.HumanoidRootPart.Velocity.Y, newvelo.Z)
+							lplr.Character.PrimaryPart.Velocity = Vector3.new(newvelo.X, lplr.Character.PrimaryPart.Velocity.Y, newvelo.Z)
 						elseif SpeedMethod.Value == "CFrame" then
 							local newpos = (movevec * (math.max(SpeedValue.Value - entityLibrary.character.Humanoid.WalkSpeed, 0) * delta))
 							if SpeedWallCheck.Enabled then
-								local ray = workspace:Raycast(entityLibrary.character.HumanoidRootPart.Position, newpos, SpeedRaycast)
-								if ray then newpos = (ray.Position - entityLibrary.character.HumanoidRootPart.Position) end
+								local ray = workspace:Raycast(lplr.Character.PrimaryPart.Position, newpos, SpeedRaycast)
+								if ray then newpos = (ray.Position - lplr.Character.PrimaryPart.Position) end
 							end
-							entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + newpos
+							lplr.Character.PrimaryPart.CFrame = lplr.Character.PrimaryPart.CFrame + newpos
 						elseif SpeedMethod.Value == "TP" then
 							if SpeedDelayTick <= tick() then
 								SpeedDelayTick = tick() + (SpeedDelay.Value / 10)
 								local newpos = (movevec * SpeedValue.Value)
 								if SpeedWallCheck.Enabled then
-									local ray = workspace:Raycast(entityLibrary.character.HumanoidRootPart.Position, newpos, SpeedRaycast)
-									if ray then newpos = (ray.Position - entityLibrary.character.HumanoidRootPart.Position) end
+									local ray = workspace:Raycast(lplr.Character.PrimaryPart.Position, newpos, SpeedRaycast)
+									if ray then newpos = (ray.Position - lplr.Character.PrimaryPart.Position) end
 								end
-								entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + newpos
+								lplr.Character.PrimaryPart.CFrame = lplr.Character.PrimaryPart.CFrame + newpos
 							end
 						elseif SpeedMethod.Value == "Pulse" then
 							local pulsenum = (SpeedPulseDuration.Value / 100)
 							local newvelo = movevec * (SpeedValue.Value + (entityLibrary.character.Humanoid.WalkSpeed - SpeedValue.Value) * (1 - (math.max(pulsetick - tick(), 0)) / pulsenum))
-							entityLibrary.character.HumanoidRootPart.Velocity = Vector3.new(newvelo.X, entityLibrary.character.HumanoidRootPart.Velocity.Y, newvelo.Z)
+							lplr.Character.PrimaryPart.Velocity = Vector3.new(newvelo.X, lplr.Character.PrimaryPart.Velocity.Y, newvelo.Z)
 						elseif SpeedMethod.Value == "WalkSpeed" then
 							if oldWalkSpeed == nil then
 								oldWalkSpeed = entityLibrary.character.Humanoid.WalkSpeed
@@ -2579,7 +2607,7 @@ run(function()
 								if SpeedJumpVanilla.Enabled then
 									entityLibrary.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 								else
-									entityLibrary.character.HumanoidRootPart.Velocity = Vector3.new(entityLibrary.character.HumanoidRootPart.Velocity.X, SpeedJumpHeight.Value, entityLibrary.character.HumanoidRootPart.Velocity.Z)
+									lplr.Character.PrimaryPart.Velocity = Vector3.new(lplr.Character.PrimaryPart.Velocity.X, SpeedJumpHeight.Value, lplr.Character.PrimaryPart.Velocity.Z)
 								end
 							end
 						end
@@ -5882,6 +5910,7 @@ end)
 
 run(function()
 	local Atmosphere = {Enabled = false}
+	local atmode = {Value = "Custon"}
 	local SkyUp = {Value = ""}
 	local SkyDown = {Value = ""}
 	local SkyLeft = {Value = ""}
@@ -5891,9 +5920,16 @@ run(function()
 	local SkySun = {Value = ""}
 	local SkyMoon = {Value = ""}
 	local SkyColor = {Value = 1}
+	local snowparts = {}
+	local Time = {Value = lightingService.TimeOfDay}
+	local Snow = {Value}
 	local skyobj
 	local skyatmosphereobj
 	local oldobjects = {}
+	local lightingsettings = {}
+	local femboyconnection
+	local lightingconnection
+	local lightingchanged = false
 	Atmosphere = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
 		Name = "Atmosphere",
 		Function = function(callback)
@@ -5904,19 +5940,91 @@ run(function()
 						v.Parent = game
 					end
 				end
-				skyobj = Instance.new("Sky")
-				skyobj.SkyboxBk = tonumber(SkyBack.Value) and "rbxassetid://"..SkyBack.Value or SkyBack.Value
-				skyobj.SkyboxDn = tonumber(SkyDown.Value) and "rbxassetid://"..SkyDown.Value or SkyDown.Value
-				skyobj.SkyboxFt = tonumber(SkyFront.Value) and "rbxassetid://"..SkyFront.Value or SkyFront.Value
-				skyobj.SkyboxLf = tonumber(SkyLeft.Value) and "rbxassetid://"..SkyLeft.Value or SkyLeft.Value
-				skyobj.SkyboxRt = tonumber(SkyRight.Value) and "rbxassetid://"..SkyRight.Value or SkyRight.Value
-				skyobj.SkyboxUp = tonumber(SkyUp.Value) and "rbxassetid://"..SkyUp.Value or SkyUp.Value
-				skyobj.SunTextureId = tonumber(SkySun.Value) and "rbxassetid://"..SkySun.Value or SkySun.Value
-				skyobj.MoonTextureId = tonumber(SkyMoon.Value) and "rbxassetid://"..SkyMoon.Value or SkyMoon.Value
-				skyobj.Parent = lightingService
-				skyatmosphereobj = Instance.new("ColorCorrectionEffect")
-				skyatmosphereobj.TintColor = Color3.fromHSV(SkyColor.Hue, SkyColor.Sat, SkyColor.Value)
-				skyatmosphereobj.Parent = lightingService
+				if atmode.Value == "Custom" then
+					skyobj = Instance.new("Sky")
+					skyobj.SkyboxBk = tonumber(SkyBack.Value) and "rbxassetid://"..SkyBack.Value or SkyBack.Value
+					skyobj.SkyboxDn = tonumber(SkyDown.Value) and "rbxassetid://"..SkyDown.Value or SkyDown.Value
+					skyobj.SkyboxFt = tonumber(SkyFront.Value) and "rbxassetid://"..SkyFront.Value or SkyFront.Value
+					skyobj.SkyboxLf = tonumber(SkyLeft.Value) and "rbxassetid://"..SkyLeft.Value or SkyLeft.Value
+					skyobj.SkyboxRt = tonumber(SkyRight.Value) and "rbxassetid://"..SkyRight.Value or SkyRight.Value
+					skyobj.SkyboxUp = tonumber(SkyUp.Value) and "rbxassetid://"..SkyUp.Value or SkyUp.Value
+					skyobj.SunTextureId = tonumber(SkySun.Value) and "rbxassetid://"..SkySun.Value or SkySun.Value
+					skyobj.MoonTextureId = tonumber(SkyMoon.Value) and "rbxassetid://"..SkyMoon.Value or SkyMoon.Value
+					skyobj.Parent = lightingService
+					skyatmosphereobj = Instance.new("ColorCorrectionEffect")
+					skyatmosphereobj.TintColor = Color3.fromHSV(SkyColor.Hue, SkyColor.Sat, SkyColor.Value)
+					skyatmosphereobj.Parent = lightingService
+					lightingService.TimeOfDay = Time.Value
+					if Snow.Value > 0 then -- done
+						for i = 1, Snow.Value do
+							task.spawn(function()
+								local sunray = Instance.new("SunRaysEffect")
+								sunray.Intensity = 0.03
+								sunray.Parent = lightingService
+								local bloom = Instance.new("BloomEffect")
+								bloom.Threshold = 2
+								bloom.Intensity = 1
+								bloom.Size = 2
+								bloom.Parent = lightingService
+								local atmosphere = Instance.new("Atmosphere")
+								atmosphere.Density = 0.3
+								atmosphere.Offset = 0.25
+								atmosphere.Color = Color3.fromRGB(198, 198, 198)
+								atmosphere.Decay = Color3.fromRGB(104, 112, 124)
+								atmosphere.Glare = 0
+								atmosphere.Haze = 0
+								atmosphere.Parent = lightingService
+								skyColor = Instance.new("ColorCorrectionEffect",lighting)
+								skyColor.TintColor = Color3.fromRGB(240,144,217)
+								local snowpart = Instance.new("Part")
+								snowpart.Size = Vector3.new(240, 0.5, 240)
+								snowpart.Name = "catvapesnowpart"
+								snowpart.Transparency = 1
+								snowpart.CanCollide = false
+								snowpart.Position = Vector3.new(0, 120, 286)
+								snowpart.Anchored = true
+								snowpart.Parent = workspace
+								local snow = Instance.new("ParticleEmitter")
+								snow.RotSpeed = NumberRange.new(300)
+								snow.VelocitySpread = 35
+								snow.Rate = 28
+								snow.Texture = "rbxassetid://8158344433"
+								snow.Rotation = NumberRange.new(110)
+								snow.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.16939899325371,0),NumberSequenceKeypoint.new(0.23365999758244,0.62841498851776,0.37158501148224),NumberSequenceKeypoint.new(0.56209099292755,0.38797798752785,0.2771390080452),NumberSequenceKeypoint.new(0.90577298402786,0.51912599802017,0),NumberSequenceKeypoint.new(1,1,0)})
+								snow.Lifetime = NumberRange.new(8,14)
+								snow.Speed = NumberRange.new(8,18)
+								snow.EmissionDirection = Enum.NormalId.Bottom
+								snow.SpreadAngle = Vector2.new(35,35)
+								snow.Size = NumberSequence.new({NumberSequenceKeypoint.new(0,0,0),NumberSequenceKeypoint.new(0.039760299026966,1.3114800453186,0.32786899805069),NumberSequenceKeypoint.new(0.7554469704628,0.98360699415207,0.44038599729538),NumberSequenceKeypoint.new(1,0,0)})
+								snow.Parent = snowpart
+								local windsnow = Instance.new("ParticleEmitter")
+								windsnow.Acceleration = Vector3.new(0,0,1)
+								windsnow.RotSpeed = NumberRange.new(100)
+								windsnow.VelocitySpread = 35
+								windsnow.Rate = 28
+								windsnow.Texture = "rbxassetid://8158344433"
+								windsnow.EmissionDirection = Enum.NormalId.Bottom
+								windsnow.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.16939899325371,0),NumberSequenceKeypoint.new(0.23365999758244,0.62841498851776,0.37158501148224),NumberSequenceKeypoint.new(0.56209099292755,0.38797798752785,0.2771390080452),NumberSequenceKeypoint.new(0.90577298402786,0.51912599802017,0),NumberSequenceKeypoint.new(1,1,0)})
+								windsnow.Lifetime = NumberRange.new(8,14)
+								windsnow.Speed = NumberRange.new(8,18)
+								windsnow.Rotation = NumberRange.new(110)
+								windsnow.SpreadAngle = Vector2.new(35,35)
+								windsnow.Size = NumberSequence.new({NumberSequenceKeypoint.new(0,0,0),NumberSequenceKeypoint.new(0.039760299026966,1.3114800453186,0.32786899805069),NumberSequenceKeypoint.new(0.7554469704628,0.98360699415207,0.44038599729538),NumberSequenceKeypoint.new(1,0,0)})
+								windsnow.Parent = snowpart
+								for i = 1, 30 do
+									for i2 = 1, 30 do
+										local clone = snowpart:Clone()
+										clone.Position = Vector3.new(240 * (i - 1), 120, 240 * (i2 - 1))
+										clone.Parent = workspace
+										table.insert(snowparts, clone)
+									end
+								end
+							end)
+						end
+					end
+				elseif atmode.Value == "Femboy" then
+					-- soon
+				end
 			else
 				if skyobj then skyobj:Destroy() end
 				if skyatmosphereobj then skyatmosphereobj:Destroy() end
@@ -5924,7 +6032,38 @@ run(function()
 					v.Parent = lightingService
 				end
 				table.clear(oldobjects)
+				for i,v in snowparts do
+					pcall(function() v:Remove() end)
+				end
+				table.clear(snowparts)
 			end
+		end
+	})
+	atmode = Atmosphere.CreateDropdown({
+		Name = "Mode",
+		List = {"Custom", "Femboy"},
+		Function = function()
+			Atmosphere.ToggleButton(false)
+			Atmosphere.ToggleButton(false)
+		end
+	})
+	Time = Atmosphere.CreateSlider({
+		Name = "Time",
+		Min = 0,
+		Max = 24,
+		Default = 23,
+		Function = function(v)
+			lightingService.TimeOfDay = v
+		end
+	})
+	Snow = Atmosphere.CreateSlider({
+		Name = "Snow Multiplier",
+		Min = 0,
+		Max = 10,
+		Default = 0,
+		Function = function(v)
+			Atmosphere.ToggleButton(false)
+			Atmosphere.ToggleButton(false)
 		end
 	})
 	SkyUp = Atmosphere.CreateTextBox({
@@ -6030,7 +6169,7 @@ run(function()
 	end
 
 
-	Disabler = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
+	Disabler = vape.windows.afk.CreateOptionsButton({
 		Name = "ClientKickDisabler",
 		Function = function(callback)
 			if callback then
@@ -6212,4 +6351,314 @@ run(function()
 	createKeystroke(Enum.KeyCode.A, UDim2.new(0, 0, 0, 42), UDim2.new(0, 7, 0, 5))
 	createKeystroke(Enum.KeyCode.D, UDim2.new(0, 76, 0, 42), UDim2.new(0, 8, 0, 5))
 	createKeystroke(Enum.KeyCode.Space, UDim2.new(0, 0, 0, 83), UDim2.new(0, 25, 0, -10))
+end)
+
+run(function()
+	local backtrack = {}
+	local backtracktick = {}
+	local freeze = function(call)
+		for i,v in playersService:GetPlayers() do
+			if v ~= lplr then 
+				if not isAlive(v) then continue end
+				v.Character.PrimaryPart.Anchored = call
+			end
+		end
+	end
+	backtrack = vape.windows.blatant.CreateOptionsButton({
+		Name = 'BackTrack',
+		Function = function(call)
+			if call then
+				task.spawn(function()
+					repeat
+						local entities = AllNearPosition(15, 100)
+						if #entities > 0 then
+							task.spawn(freeze, true)
+						end
+						task.wait(backtracktick.Value - (math.random(1,3)))
+						task.spawn(freeze, false)
+					until (not backtrack.Enabled)
+				end)
+			else
+				task.spawn(freeze, false)
+			end
+		end
+	})
+	backtracktick = backtrack.CreateSlider({
+		Name = 'Tick',
+		Min = 2,
+		Max = 7,
+		Function = function() end,
+		Default = 3
+	})
+end)
+
+run(function()
+	local autodisconnect = {}
+	local tick = 0
+	autodisconnect = vape.windows.afk.CreateOptionsButton({
+		Name = 'AutoDisconnect',
+		Function = function(call)
+			if call then
+				task.spawn(function()
+					repeat
+						disconnecttick += 1
+						task.wait(1)
+					until (not autodisconnect.Enabled or tick == 1140)
+					if autodisconnect.Enabled then
+						game:FindService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, lplr)
+					end
+				end)
+			else
+				tick = 0
+			end
+		end,
+		HoverText = 'Automatically rejoins the game\nafter 20 minutes. (doesn\'t work on bedwars)'
+	})
+end)
+
+run(function()
+	local AmongUs = {Enabled = false}
+	local Mode = {Value = "Among Us"}
+
+	local function getTorso(ent)
+		local hum = ent.Character:WaitForChild("Humanoid")
+		local torso = "UpperTorso"
+		if hum.RigType == Enum.HumanoidRigType.R6 or ent.Character:FindFirstChild("Torso") then torso = "Torso" end
+		return ent.Character[torso]
+	end
+
+	local function camu(ent)
+		local asset = "http://www.roblox.com/asset/?id=6235963214"
+		local text = "http://www.roblox.com/asset/?id=6235963270"
+		local part = Instance.new("Part",ent.Character)
+		local mesh = Instance.new("SpecialMesh",part)
+		local weld = Instance.new("Weld",part)
+		part.Name = "amogus"
+		mesh.MeshId = asset
+		mesh.TextureId = text
+		part.CanCollide = false
+		mesh.Offset = Vector3.new(0,-0.3,0)
+		mesh.Scale = Vector3.new(0.11,0.11,0.11)
+		weld.Part0 = part
+		weld.Part1 = getTorso(ent)
+	end
+
+	AmongUs = GuiLibrary.ObjectsThatCanBeSaved.CatV5Window.Api.CreateOptionsButton({
+		Name = "PlayerModel",
+		Function = function(callback)
+			if callback then
+				RunLoops:BindToHeartbeat("amogus",function()
+					pcall(function()
+						for i,v in pairs(game.Players:GetChildren()) do
+							if v.Character:FindFirstChild("Humanoid") ~= nil and isAlive(v) then
+								if v.Character.Humanoid.Health == 0 and v.Character:FindFirstChild("amogus") then
+									v.Character:FindFirstChild("amogus"):Destroy()
+								end
+								if v.Character.Humanoid ~= nil and (v.Character ~= nil and v.Character.HumanoidRootPart ~= nil and v.Character.Humanoid ~= nil and v.Character.Humanoid.Health ~= 0) then
+									for o,b in pairs(v.Character:GetChildren()) do
+										if b.Name == "SkibidiPing" then
+											return
+										elseif b:IsA("MeshPart") and b.Name ~= "amogus" then
+											b.Transparency = 1
+										elseif b:IsA("Accessory") and not b.Name:find("sword") and not b.Name:find("block") and not b.Name:find("pickaxe") and not b.Name:find("bow") and not b.Name:find("axe") and not b.Name:find("fireball") and not b.Name:find("cannon") and not b.Name:find("shears") then
+											b.Handle.Transparency = 1
+										elseif b:IsA("Part") and b.Name ~= "amogus" then
+											b.Transparency = 1
+										end
+									end
+									if v.Character:FindFirstChild("amogus") == nil then
+										camu(v)
+									end
+								end
+							end
+						end
+					end)
+				end)
+			else
+				RunLoops:UnbindFromHeartbeat("amogus")
+				for i,v in pairs(game.Players:GetChildren()) do
+					for o,b in pairs(v.Character:GetChildren()) do
+						if b.Name == "SkibidiPing" then
+							return
+						elseif b:IsA("MeshPart") then
+							b.Transparency = 0
+						elseif b:IsA("Part") and b.Name ~= "HumanoidRootPart" then
+							b.Transparency = 0
+						elseif b:IsA("Accessory") then
+							b.Handle.Transparency = 0
+						end
+						if b:IsA("Part") and b.Name == "amogus" then
+							b:Destroy()
+						end
+					end
+				end
+				lplr.Character:FindFirstChild("amogus"):Destroy()
+			end
+		end,
+		HoverText = "Turns you into Among Us",
+		ExtraText = function() return Mode.Value end
+	})
+end)
+
+run(function()
+	local desync = {}
+	local desyncdelay = {}
+	local desyncmode = {}
+	local desyncwaypoint = {}
+	local desyncfloat = {}
+	local desyncshowroot = {}
+	local waypoints = {}
+	local old
+	local clone
+	local createclone = function()
+		if not isAlive() then
+			repeat task.wait() until isAlive()
+		end
+		lplr.Character.Parent = game
+		lplr.Character.HumanoidRootPart.Archivable = true
+		old = lplr.Character.HumanoidRootPart 
+		clone = old:Clone()
+		clone.Parent = lplr.Character
+		old.Parent = workspace
+		lplr.Character.PrimaryPart = clone
+		lplr.Character.Parent = workspace
+		old.Transparency = desyncshowroot.Enabled and 0.4 or 1
+	end
+	local destroyclone = function()
+		old.CFrame = clone.CFrame
+		old.Transparency = 1
+		lplr.Character.Parent = game
+		old.Parent = lplr.Character
+		clone.Parent = workspace
+		lplr.Character.PrimaryPart = old
+		lplr.Character.Parent = workspace
+		clone:Remove()
+		clone = {} 
+		old = {}
+	end
+	desync = vape.windows.blatant.CreateOptionsButton({
+		Name = 'Desync',
+		Function = function(call)
+			if call then
+				pcall(createclone)
+				table.insert(desync.Connections, runservice.Stepped:Connect(function()
+					if old then
+						old.Velocity = Vector3.zero
+					end
+				end))
+				repeat
+					if not isAlive() then
+						return task.wait()
+					end
+					if desyncfloat.Enabled and vape.istoggled('Fly') then
+						pcall(destroyclone)
+						repeat task.wait(1) until not vape.istoggled('Fly')
+						pcall(createclone)
+					end
+					task.spawn(function()
+						for i = 1,4 do
+							task.wait(0.1)
+							table.insert(waypoints, {cframe = clone.CFrame})
+						end
+					end)
+					task.wait(desyncdelay.Value)
+					print(2)
+					if desyncmode.Value == 'Tween' then
+						tweenservice:Create(old, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {CFrame = clone.CFrame}):Play()
+					elseif desyncmode.Value == 'Instant' then
+						old.CFrame = clone.CFrame
+					else
+						for i,v in waypoints do
+							if desyncwaypoint.Value == 'Tween' then
+								tweenservice:Create(old, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {CFrame = v.cframe}):Play()
+							else
+								old.CFrame = v.cframe
+							end
+						end
+					end
+				until (not desync.Enabled)
+			else
+				table.clear(waypoints)
+				pcall(destroyclone)
+			end
+		end,
+		HoverText = 'Delays your character movement\n this won\'t affect your pov.'
+	})
+	desyncmode = desync.CreateDropdown({
+		Name = 'Mode',
+		List = {'Tween', 'Instant', 'WayPoint'},
+		Function = function() 
+			if desyncmode.Value == 'WayPoint' then
+				desyncwaypoint.Object.Visible = true
+			else
+				desyncwaypoint.Object.Visible = false
+			end
+		end,
+		Default = 'WayPoint'
+	})
+	desyncwaypoint = desync.CreateDropdown({
+		Name = 'WaypointMode',
+		List = {'Tween', 'Instant'},
+		Function = function() end,
+		Default = 'Tween'
+	})
+	desyncdelay = desync.CreateSlider({
+		Name = 'Delay',
+		Min = 1,
+		Max = 5,
+		Function = function() end,
+		Default = 0.3
+	})
+	desyncfloat = desync.CreateToggle({
+		Name = 'Disable On Fly',
+		Function = function() end
+	})
+	desyncshowroot = desync.CreateToggle({
+		Name = 'Show Root',
+		Function = function() end
+	})
+	desyncwaypoint.Object.Visible = false
+end)
+
+run(function()
+	local FakeLag = {Enabled = false}
+	local FakeLagFPS = {Value = 10}
+	local FakeLagFPS2 = {Value = 10}
+
+	FakeLag = vape.windows.blatant.CreateOptionsButton({
+		Name = "FakeLag",
+		Function = function(callback)
+			if callback then
+				task.spawn(function()
+					repeat
+					task.wait()
+						pcall(function()
+							entityLibrary.character.HumanoidRootPart.Anchored = true
+							task.wait(FakeLagFPS.Value/200)
+							entityLibrary.character.HumanoidRootPart.Anchored = false
+							task.wait(FakeLagFPS2.Value/200)
+						end)
+					until (not FakeLag.Enabled)
+				end)
+			else
+				entityLibrary.character.HumanoidRootPart.Anchored = false
+			end
+		end,
+		HoverText = "Fakes lag",
+		ExtraText = function() return FakeLagFPS.Value end
+	})
+	FakeLagFPS = FakeLag.CreateSlider({
+		Name = "FPS Start",
+		Min = 1,
+		Max = 30,
+		Default = 30,
+		Function = function(val) end
+	})
+	FakeLagFPS2 = FakeLag.CreateSlider({
+		Name = "FPS End",
+		Min = 1,
+		Max = 30,
+		Default = 30,
+		Function = function(val) end
+	})
 end)
