@@ -8,11 +8,6 @@ end
 
 local API = {}
 run(function()
-    --[[local url = "https://friendly-organic-gator.ngrok-free.app/"
-    local request = http.request({
-        Url = url.."version", -- replace with files/main or whatever files needed
-        Method = "GET"
-    })]]--
     local request
 
     API.New = function(url, method, catvapeurl) -- string, string, boolean
@@ -22,8 +17,6 @@ run(function()
             Url = addition..url, -- replace with files/main or whatever files needed
             Method = method
         })
-
-        table.clear(API)
     
         API.Main = request
         API.GetHeader = function(header)
