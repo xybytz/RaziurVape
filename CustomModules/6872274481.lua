@@ -9616,3 +9616,72 @@ run(function()
 	end)
 	--warn('executed')
 end)
+
+run(function()
+	local disabler = {}
+	local createclone = function()
+		if not isAlive() then
+			repeat task.wait() until isAlive()
+		end
+		lplr.Character.Parent = game
+		lplr.Character.HumanoidRootPart.Archivable = true
+		old = lplr.Character.HumanoidRootPart 
+		old.Anchored = false
+		clone = old:Clone()
+		clone.Parent = lplr.Character
+		old.Parent = workspace
+		lplr.Character.PrimaryPart = clone
+		entityLibrary.character.HumanoidRootPart = clone
+		lplr.Character.Parent = workspace
+		old.Transparency = 0
+	end
+	local destroyclone = function()
+		old.CFrame = clone.CFrame
+		old.Transparency = 1
+		lplr.Character.Parent = game
+		old.Parent = lplr.Character
+		clone.Parent = workspace
+		lplr.Character.PrimaryPart = old
+		lplr.Character.Parent = workspace
+		entityLibrary.character.HumanoidRootPart = old
+		clone:Remove()
+		clone = {} 
+		old = {} 
+	end
+	local Remotes = require(game:GetService("ReplicatedStorage").TS.remotes).default
+	disabler = vape.windows.exploit.CreateOptionsButton({
+		Name = 'Disabler',
+		Function = function(call)
+			if call then
+				if store.matchState == 0 then
+					repeat task.wait(1) until store.matchState ~= 0
+				end
+				lplr.Character:SetAttribute("Transparency", 1)
+				createclone()
+				table.insert(disabler.Connections, runservice.Stepped:Connect(function()
+					if old then	
+						old.Velocity = Vector3.zero
+						Remotes.Client:Get('RequestSquadLaunch'):CallServer({
+							target = clone.Position,
+							player = lplr
+						})
+						old.CFrame = clone.CFrame
+					end
+				end))
+				repeat	
+					lplr.Character:SetAttribute("Transparency", 1)
+					lplr.Character:SetAttribute("Locked", false)
+					Remotes.Client:Get("RequestEnterSquadLauncher"):CallServer({
+						squadLauncher = game.Players.LocalPlayer.Character
+					})
+					Remotes.Client:Get("RequestExitSquadLauncher"):CallServer({
+						squadLauncher = game.Players.LocalPlayer.Character
+					})
+					task.wait(0)
+				until (not disabler.Enabled)
+			else
+				destroyclone()
+			end
+		end
+	})
+end)
