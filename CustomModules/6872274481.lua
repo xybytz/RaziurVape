@@ -9636,7 +9636,7 @@ run(function()
     local autoprojectile = {}
     local projectile = bedwars.Client:Get(bedwars.ProjectileRemote)
     forgeexploit = vape.windows.exploit.CreateOptionsButton({
-        Name = 'ChickenExploit',
+        Name = 'ForgeExploit',
         Function = function(call)
         if call then
         for i = 1,7 do
@@ -9671,7 +9671,7 @@ run(function()
             end)
         repeat
         bedwars.Client:Get('SetForgeSelectMechanic'):SendToServer({
-            forgeUpgrade = 7
+            forgeUpgrade = math.random(1,7)
         })
         task.wait(0.05)
         until (not forgeexploit.Enabled)
