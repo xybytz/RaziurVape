@@ -66,6 +66,7 @@ butt = Tab1:AddButton({"Install", function()
     if prog <= 100 then
         for i = 0, 100 - prog do
             prog += 1
+            task wait(0.09)
         end
     end
     task.wait(0.75)
