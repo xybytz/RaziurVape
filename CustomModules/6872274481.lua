@@ -9615,29 +9615,4 @@ run(function()
 		return old(self, ...)
 	end)
 	--warn('executed')
-end)
-
-run(function()
-	local beamexploit = {}
-	local beamremote = bedwars.Client:Get('LaserPickaxeStartSpinningFromClient')
-	local random = Random.new()
-	beamexploit = vape.windows.exploit.CreateOptionsButton({
-		Name = 'LazerbeamExploit',
-		Function = function(call)
-			if call then
-				RunLoops:BindToStepped("lazerbeam youtube", function()
-					beamremote:SendToServer({
-						laserIsOn = true,
-						targetBlockPos = lplr.Character.HumanoidRootPart.Position + Vector3.new(
-							random:NextNumber(-20, 20), 
-							random:NextNumber(-20, 20), 
-							random:NextNumber(-20, 20)
-						)
-					})
-				end)
-			else
-				RunLoops:UnbindFromStepped("lazerbeam youtube")
-			end
-		end
-	})
-end)
+																																																																																																																																																																																																																																)																																																																																																																																																																																																																													end
