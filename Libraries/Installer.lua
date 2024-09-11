@@ -7,13 +7,20 @@ local Window = lib:MakeWindow({
 
 local Tab1 = Window:MakeTab({"Installer", ""})
 
-local Paragraph = Tab1:AddParagraph({"Paragraph", "This is a Paragraph"})
+local Paragraph = Tab1:AddParagraph({"Progress Monitor", "This is a Paragraph"})
 
 Paragraph:Set("Progress: 0%, Waiting")
 
 local butt
 butt = Tab1:AddButton({"Install", function()
+    local hm = "Waiting"
     local prog = 0
+    task.spawn(function()
+        repeat
+            task.wait(0.005)
+            Paragraph:Set("Progress: "..prog.."%, "..hm)
+        until false
+    end)
     local cloneref = cloneref or function(instance) return instance end
     local baseDirectory = (shared.VapePrivate and "vapeprivate" or shared.catvape and 'catvape' or "vape")
     local httpservice = cloneref(game.GetService(game, 'HttpService'))
@@ -36,18 +43,18 @@ butt = Tab1:AddButton({"Install", function()
     end
 
     WriteFiles("main")
-    prog = prog + 40
-    Paragraph:Set("Progress: "..prog.."%, Installing main files")
+    hm = "Installing main files"
+    for i = 0, 40 do prog = prog + 1 task.wait(0.05) end
+    hm = "Installing libraries"
     WriteFiles("libraries")
-    prog = prog + 20
-    Paragraph:Set("Progress: "..prog.."%, Installing main files")
+    for i = 0, 20 do prog = prog + 1 task.wait(0.05) end
+    hm = "Installing games"
     WriteFiles("games")
-    prog = prog + 10
-    Paragraph:Set("Progress: "..prog.."%, Installing main files")
+    for i = 0, 10 do prog = prog + 1 task.wait(0.05) end
+    hm = "Installing assets"
     WriteFiles("assets")
-    prog = prog + 5
-    Paragraph:Set("Progress: "..prog.."%, Installing main files")
+    for i = 0, 5 do prog = prog + 1 task.wait(0.05) end
     task.wait(0.75)
-    Paragraph:Set("Progress: 100%, Finished! You may now close this window.")
+    hm = "Finished! You may now close this window."
     butt:Destroy()
 end})
