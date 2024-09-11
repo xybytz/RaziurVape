@@ -63,7 +63,11 @@ butt = Tab1:AddButton({"Install", function()
         end
     end
     WriteFiles("assets")
-    for i = 0, 5 do prog = prog + 1 task.wait(0.05) end
+    if prog <= 100 then
+        for i = 0, 100 - prog do
+            prog += 1
+        end
+    end
     task.wait(0.75)
     hm = "Finished! You may now close this window."
     butt:Destroy()
