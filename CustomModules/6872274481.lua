@@ -9617,92 +9617,27 @@ run(function()
 	--warn('executed')
 end)
 
-		local isChickensAlive = function()
-local chickens = {}
-for i,v in workspace:GetChildren() do
-if v.ClassName == 'Model' and v.Name == 'Chicken' and v:GetAttribute('PlacedByUserId') and v:GetAttribute('PlacedByUserId') == lplr.UserId then
-pcall(function()
-    if v:FindFirstChildWhichIsA('Humanoid').Health > 0 then
-    table.insert(chickens, v)
-    end
-    end)
-end
-end
-return #chickens
-end
-
 run(function()
-    local forgeexploit = {}
-    local autoprojectile = {}
-    local projectile = bedwars.Client:Get(bedwars.ProjectileRemote)
-    forgeexploit = vape.windows.exploit.CreateOptionsButton({
-        Name = 'ForgeExploit',
-        Function = function(call)
-        if call then
-        for i = 1,7 do
-        bedwars.Client:Get('SetForgeSelectMechanic'):SendToServer({
-            forgeUpgrade = 7
-        })
-        end
-        task.spawn(function()
-            if autoprojectile.Enabled then
-            repeat
-            local chickens = isChickensAlive()
-            local chicken = getItemNear('chicken_deploy')
-            if chicken and chickens ~= 3 then
-            switchItem(chicken.tool)
-            projectile:CallServerAsync(
-                chicken.tool,
-                'chicken_deploy',
-                'deploy_chicken',
-                lplr.Character.HumanoidRootPart.Position,
-                lplr.Character.HumanoidRootPart.Position,
-                Vector3.new(0, -60, 0),
-                game:GetService("HttpService"):GenerateGUID(true),
-                {
-                    drawDurationSeconds = 1
-                },
-                workspace:GetServerTimeNow() - 0.045
-            )
-            end
-            task.wait(0)
-            until (not forgeexploit.Enabled or not autoprojectile.Enabled)
-            end
-            end)
-        repeat
-        bedwars.Client:Get('SetForgeSelectMechanic'):SendToServer({
-            forgeUpgrade = math.random(1,7)
-        })
-        task.wait(0.05)
-        until (not forgeexploit.Enabled)
-        end
-        end
-    })
-    autoprojectile = forgeexploit.CreateToggle({
-        Name = 'UseProjectile',
-        Function = void,
-        Default = true
-    })
-    end)
-
-run(function()
-    local DamageExploit = {
-        Enabled = false
-    }
-
-    DamageExploit = vape.windows.exploit.CreateOptionsButton({
-        Name = "DamageExploit",
-        HoverText = "Only works with swords!",
-        Function = function(callback)
-        repeat
-        local item = getItemNear("sword")
-        if item and not ScytheExploit.Enabled then
-        bedwars.Client:Get('SetForgeSelectMechanic'):SendToServer({
-            forgeUpgrade = 0
-        })
-        end
-        task.wait(0.5)
-        until (not DamageExploit.Enabled)
-        end
-    })
-    end)
+	local beamexploit = {}
+	local beamremote = bedwars.Client:Get('LaserPickaxeStartSpinningFromClient')
+	local random = Random.new()
+	beamexploit = vape.windows.exploit.CreateOptionsButton({
+		Name = 'LazerbeamExploit',
+		Function = function(call)
+			if call then
+				RunLoops:BindToStepped("lazerbeam youtube", function()
+					beamremote:SendToServer({
+						laserIsOn = true,
+						targetBlockPos = lplr.Character.HumanoidRootPart.Position + Vector3.new(
+							random:NextNumber(-20, 20), 
+							random:NextNumber(-20, 20), 
+							random:NextNumber(-20, 20)
+						)
+					})
+				end)
+			else
+				RunLoops:UnbindFromStepped("lazerbeam youtube")
+			end
+		end
+	})
+end)
