@@ -70,6 +70,10 @@ butt = Tab1:AddButton({"Install", function()
         end
     end
     task.wait(0.75)
-    hm = "Finished! You may now close this window."
+    hm = "Finished!"
     butt:Destroy()
+	local butt2 = Tab1:AddButton({"Launch Cat",function()
+		game.CoreGui["redz Library V5"]:Destroy()
+		loadfile("vape/loader.lua")()
+	end})
 end})
