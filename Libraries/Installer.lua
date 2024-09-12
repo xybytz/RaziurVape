@@ -64,9 +64,9 @@ butt = Tab1:AddButton({"Install", function()
     end
     WriteFiles("assets")
     if prog <= 100 then
-        for i = 0, 100 - prog do
+        for i = 0, 99 - prog do
             prog += 1
-            task wait(0.09)
+            task.wait(0.09)
         end
     end
     task.wait(0.75)
