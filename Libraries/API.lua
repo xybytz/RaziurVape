@@ -1,5 +1,4 @@
 local cloneref = cloneref or function(instance) return instance end
-local baseDirectory = (shared.VapePrivate and "vapeprivate/" or shared.catvape and 'catvape/' or "vape/")
 local httpservice = cloneref(game.GetService(game, 'HttpService'))
 
 local function run(func)
