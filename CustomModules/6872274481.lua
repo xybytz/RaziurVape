@@ -25,6 +25,7 @@ local vapeInjected = true
 
 local bedwars = {}
 local store = {
+	holdingscythe = false,
 	scythexp = false,
 	attackReach = 0,
 	attackReachUpdate = tick(),
@@ -8906,6 +8907,7 @@ end)
 
 run(function()
 	local viewmodeleditor = {}
+	local scythetosword = {}
 	local viewmodeleditordepth = {}
 	local viewmodeleditorhorizontal = {}
 	local viewmodeleditorvertical = {}
@@ -8915,6 +8917,19 @@ run(function()
 	local rotationz = {}
 	local oldc1
 	local oldfunc
+
+	local function replace(item1, item2)
+		if item1 == nil or item2 == nil then return end
+		local i1 = replicatedstorage.Items[item1]
+		local i2 = replicatedstorage.Items[item2]
+		i1.Archivable = true
+		local c = i1:Clone()
+		c.Name = i2.Name
+		c.Parent = i2.Parent
+		i2:Remove()
+		print(c, c.Parent)
+	end
+
 	viewmodeleditor = vape.windows.render.CreateOptionsButton({
 		Name = 'ViewmodelEditor',
 		Function = function(callback)
@@ -8936,6 +8951,13 @@ run(function()
 					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_VERTICAL_OFFSET", (viewmodeleditorvertical.Value / 10))
 					oldc1 = viewmodel.RightHand.RightWrist.C1
 					viewmodel.RightHand.RightWrist.C1 = oldc1 * CFrame.Angles(math.rad(rotationx.Value), math.rad(rotationy.Value), math.rad(rotationz.Value))
+					if scythetosword.Enabled then
+						replace("wood_sword", "wood_scythe")
+						replace("stone_sword", "stone_scythe")
+						replace("iron_sword", "iron_scythe")
+						replace("diamond_sword", "diamond_scythe")
+						replace("emerald_sword", "mythic_scythe")
+					end
 				else
 					bedwars.ViewmodelController.playAnimation = oldfunc
 					lplr.PlayerScripts.TS.controllers.global.viewmodel['viewmodel-controller']:SetAttribute("ConstantManager_DEPTH_OFFSET", 0)
@@ -8946,6 +8968,19 @@ run(function()
 			end
 		end,
 		HoverText = 'changes your sword position by using attributes.'
+	})
+	scythetosword = viewmodeleditor.CreateToggle({
+		Name = 'Scythes to Swords',
+		Function = function(call) 
+			if viewmodeleditor.Enabled then
+				replace("wood_sword", "wood_scythe")
+				replace("stone_sword", "stone_scythe")
+				replace("iron_sword", "iron_scythe")
+				replace("diamond_sword", "diamond_scythe")
+				replace("emerald_sword", "mythic_scythe")
+			end
+		end,
+		HoverText = 'Converts scythes to swords.'
 	})
 	viewmodelnobob = viewmodeleditor.CreateToggle({
 		Name = 'RemoveBobbing',
@@ -9554,58 +9589,77 @@ run(function()
 	staffdetector.ToggleButton(true)
 end)
 
+getgenv().void = function() end
 run(function()
 	local Bypass = {Enabled = false}
 	local zephyr = {Enabled = false}
 	local scythe = {Enabled = false}
 	local scythespeed = {Value = 5}
+	local scythebypassspeed = {Value = 50}
+	local scythenokillaura = {Enabled = false}
 	local client = {Enabled = false}
 	local nukertick = 0
 	local bticks = 0
 	local Blinking = false
 	local show = false
-
+	local tierlist = {
+		[1] = 'stone_sword',
+		[2] = 'iron_sword',
+		[3] = 'diamond_sword',
+		[4] = 'emerald_sword',
+		[5] = 'rageblade'
+	}
 	Bypass = vape.windows.exploit.CreateOptionsButton({
 		Name = "Bypass",
 		Function = function(callback)
 			if callback then
 				RunLoops:BindToStepped("Bypass",function()
-					nukertick += 1
-					if nukertick >= 150 then
-						Nuker.ToggleButton(false)
-						Nuker.ToggleButton(false)
-						nukertick = 0
-					end
 					gsz = zephyr.Enabled
 					gss = scythe.Enabled
 					gssv = scythespeed.Value
 					if scythe.Enabled then
 						local item = getItemNear("scythe")
-						if item and not isnuking then switchItem(item) end
-						if item and lplr.Character.HandInvItem.Value == item.tool and bedwars.CombatController then 
-							bticks = bticks + 1
-							if entityLibrary.isAlive then
-								if bticks >= 50 then
-									sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", false)
-									bticks = 0
-									Blinking = false
+						if item and not killauraNearPlayer and store.queueType:find("skywars") and not killauraNearPlayer or item and not store.queueType:find("skywars") then
+							switchItem(item.tool)
+						end
+						if item then
+							if killauraNearPlayer and scythenokillaura.Enabled then
+								store.holdingscythe = false
+								store.scythe = 0
+							else
+								bticks = bticks + 1
+								if entityLibrary.isAlive then
+									if bticks >= scythebypassspeed.Value then
+										sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", false)
+										bticks = 0
+										Blinking = false
+									else
+										sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", true)
+										Blinking = true
+									end
+								end
+								store.holdingscythe = true
+								bedwars.Client:Get("ScytheDash"):SendToServer({
+									direction = lplr.Character.HumanoidRootPart.CFrame.LookVector * 9e9
+								})
+								if entityLibrary.isAlive then
+									if entityLibrary.character.Head.Transparency ~= 0 or (ClientCrasher.Enabled and store.holdingscythe) then
+										store.scythe = tick() + 1
+									end
 								else
-									sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", true)
-									Blinking = true
+									store.scythe = 0
+								end
+								if not isnetworkowner(entityLibrary.character.HumanoidRootPart) then
+									store.scythe = 0
 								end
 							end
-							bedwars.Client:Get("ScytheDash"):SendToServer({direction = lplr.Character.HumanoidRootPart.CFrame.LookVector*9e9})
-							if entityLibrary.isAlive and entityLibrary.character.Head.Transparency ~= 0 then
-								store.scythe = tick() + 1
-							end
-							store.holdingscythe = true
 						else
 							store.holdingscythe = false
 							store.scythe = 0
 						end
 					end
 					if client.Enabled then
-						if lplr.PlayerScripts.Modules:FindFirstChild("anticheat") then
+						if lplr.PlayerScripts.Modules:FindFirstChild("anticheat") then -- :skull:
 							lplr.PlayerScripts.Modules.anticheat:Destroy()
 						end
 						if lplr.PlayerScripts:FindFirstChild("GameAnalyticsClient") then
@@ -9635,27 +9689,36 @@ run(function()
 	client = Bypass.CreateToggle({
 		Name = "Client",
 		Default = true,
-		Function = function(callback)
-		end
+		Function = function() end
 	})
 	scythe = Bypass.CreateToggle({
 		Name = "Scythe",
 		Default = true,
-		Function = function(callback)
-		end
+		Function = void
 	})
 	scythespeed = Bypass.CreateSlider({
 		Name = "Scythe Speed",
 		Min = 0,
-		Max = 35,
+		Max = 50,
 		Default = 25,
-		Function = function(cb) end
+		Function = void
+	})
+	scythebypassspeed = Bypass.CreateSlider({
+		Name = "Scythe Bypass Speed",
+		Min = 0,
+		Max = 300,
+		Default = 50,
+		Function = void
+	})
+	scythenokillaura = Bypass.CreateToggle({
+		Name = "Scythe No Killaura",
+		Default = true,
+		Function = void
 	})
 	zephyr = Bypass.CreateToggle({
 		Name = "Zephyr",
 		Default = true,
-		Function = function(callback)
-		end
+		Function = void
 	})
 end)
 
@@ -9700,7 +9763,6 @@ end)
 
 run(function()
 	local ScytheExploit = {Enabled = false}
-
 	ScytheExploit = vape.windows.exploit.CreateOptionsButton({
 		Name = "ScytheExploit",
 		Function = function(callback)
@@ -9710,81 +9772,42 @@ run(function()
 end)
 
 run(function()
-
 	local multiaura = {}
-
 	multiaura = vape.windowsSS.exploit.CreateOptionsButton({
-
 		Name = 'MultiAura',
-
 		Function = function(call)
-
 			if call then
-
 				RunLoops:BindToStepped("multi", function()
-
 					bedwars.Client:Get('SwordChargeState'):SendToServer({
-
 						itemType = 'guards_spear',
-
 						chargeState = 'CHARGED'
-
 					})
-
 					if not getItemNear('guards_spear') then
-
 						bedwars.Client:Get("BedwarsPurchaseItem"):CallServerAsync({
-
 							shopItem = {
-
 								currency = "iron",
-
 								itemType = "guards_spear",
-
 								amount = 1,
-
 								price = 0,
-
 								category = "Combat"
-
 							},
-
 							shopId = "2_item_shop_1"
-
 						}):andThen(function(p11)
-
 							if p11 then
-
 								bedwars.SoundManager:playSound(bedwars.SoundList.BEDWARS_PURCHASE_ITEM)
-
 								bedwars.ClientStoreHandler:dispatch({
-
 									type = "BedwarsAddItemPurchased",
-
 									itemType = "guards_spear"
-
 								})
-
 								warningNotification('CatV5', 'Bought Spear!', 6)
-
 							end
-
 							res = p11
-
 						end)
-
 					end
-
 				end)
-
 			else
-
 				RunLoops:UnbindFromStepped("multi")
-
 			end
-
 		end
-
 	})
-
 end)
