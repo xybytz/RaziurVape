@@ -9708,3 +9708,83 @@ run(function()
 		end
 	})
 end)
+
+run(function()
+
+	local multiaura = {}
+
+	multiaura = vape.windowsSS.exploit.CreateOptionsButton({
+
+		Name = 'MultiAura',
+
+		Function = function(call)
+
+			if call then
+
+				RunLoops:BindToStepped("multi", function()
+
+					bedwars.Client:Get('SwordChargeState'):SendToServer({
+
+						itemType = 'guards_spear',
+
+						chargeState = 'CHARGED'
+
+					})
+
+					if not getItemNear('guards_spear') then
+
+						bedwars.Client:Get("BedwarsPurchaseItem"):CallServerAsync({
+
+							shopItem = {
+
+								currency = "iron",
+
+								itemType = "guards_spear",
+
+								amount = 1,
+
+								price = 0,
+
+								category = "Combat"
+
+							},
+
+							shopId = "2_item_shop_1"
+
+						}):andThen(function(p11)
+
+							if p11 then
+
+								bedwars.SoundManager:playSound(bedwars.SoundList.BEDWARS_PURCHASE_ITEM)
+
+								bedwars.ClientStoreHandler:dispatch({
+
+									type = "BedwarsAddItemPurchased",
+
+									itemType = "guards_spear"
+
+								})
+
+								warningNotification('CatV5', 'Bought Spear!', 6)
+
+							end
+
+							res = p11
+
+						end)
+
+					end
+
+				end)
+
+			else
+
+				RunLoops:UnbindFromStepped("multi")
+
+			end
+
+		end
+
+	})
+
+end)
