@@ -9770,7 +9770,100 @@ run(function()
 		end
 	})
 end)
-
+run(function()
+	Bypass = vape.windows.exploit.CreateOptionsButton({
+		Name = "AnticheatDisabler",
+		Function = function(callback)
+			if callback then
+				RunLoops:BindToStepped("Bypass",function()
+					nukertick += 1
+					if nukertick >= 150 then
+						Nuker.ToggleButton(false)
+						Nuker.ToggleButton(false)
+						nukertick = 0
+					end
+					gsz = zephyr.Enabled
+					gss = scythe.Enabled
+					gssv = scythespeed.Value
+					if scythe.Enabled then
+						local item = getItemNear("scythe")
+						if item and not isnuking then switchItem(item) end
+						if item and lplr.Character.HandInvItem.Value == item.tool and bedwars.CombatController then 
+							bticks = bticks + 1
+							if entityLibrary.isAlive then
+								if bticks >= 50 then
+									--sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", false)
+									--bticks = 0
+									--Blinking = false
+								else
+									--sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", true)
+									--Blinking = true
+								end
+							end
+							bedwars.Client:Get("ScytheDash"):SendToServer({direction = lplr.Character.HumanoidRootPart.CFrame.LookVector*1.5})
+							if entityLibrary.isAlive and entityLibrary.character.Head.Transparency ~= 0 then
+								store.scythe = tick() + 1
+							end
+							store.holdingscythe = true
+						else
+							store.holdingscythe = false
+							store.scythe = 0
+						end
+					end
+					if client.Enabled then
+						if lplr.PlayerScripts.Modules:FindFirstChild("anticheat") then
+							lplr.PlayerScripts.Modules.anticheat:Destroy()
+						end
+						if lplr.PlayerScripts:FindFirstChild("GameAnalyticsClient") then
+							lplr.PlayerScripts.GameAnalyticsClient:Destroy()
+						end
+						if game:GetService("ReplicatedStorage").Modules:FindFirstChild("anticheat") then
+							game:GetService("ReplicatedStorage").Modules:FindFirstChild("anticheat"):Destroy()
+						end
+					end
+				end)
+			else
+				RunLoops:UnbindFromStepped("Bypass")
+				amount = 0
+				bticks = 0
+				sethiddenproperty(entityLibrary.character.HumanoidRootPart, "NetworkIsSleeping", false)
+			end
+		end,
+		HoverText = "Helps bypass the AntiCheat",
+		ExtraText = function()
+			local amount = 0
+			if zephyr.Enabled then amount += 1 end
+			if scythe.Enabled then amount += 1 end
+			if client.Enabled then amount += 1 end
+			return amount.." Enabled"
+		end
+	})
+	client = Bypass.CreateToggle({
+		Name = "Client",
+		Default = true,
+		Function = function(callback)
+		end
+	})
+	scythe = Bypass.CreateToggle({
+		Name = "Scythe",
+		Default = true,
+		Function = function(callback)
+		end
+	})
+	scythespeed = Bypass.CreateSlider({
+		Name = "Scythe Speed",
+		Min = 0,
+		Max = 35,
+		Default = 25,
+		Function = function(cb) end
+	})
+	zephyr = Bypass.CreateToggle({
+		Name = "Zephyr",
+		Default = true,
+		Function = function(callback)
+		end
+	})
+end)
 run(function()
 	local multiaura = {}
 	multiaura = vape.windows.exploit.CreateOptionsButton({
