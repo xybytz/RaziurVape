@@ -9773,7 +9773,7 @@ end)
 
 run(function()
 	local multiaura = {}
-	multiaura = vape.windowsSS.exploit.CreateOptionsButton({
+	multiaura = vape.windows.exploit.CreateOptionsButton({
 		Name = 'MultiAura',
 		Function = function(call)
 			if call then
