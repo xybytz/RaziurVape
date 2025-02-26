@@ -9760,7 +9760,7 @@ run(function()
 	end)
 	--warn('executed')
 end)
-
+[[-
 run(function()
 	local ScytheExploit = {Enabled = false}
 	ScytheExploit = vape.windows.exploit.CreateOptionsButton({
@@ -9770,6 +9770,9 @@ run(function()
 		end
 	})
 end)
+		-]]
+
+		--patched uwu
 run(function()
 	Bypass = vape.windows.exploit.CreateOptionsButton({
 		Name = "AnticheatDisabler",
@@ -9785,7 +9788,9 @@ run(function()
 					gsz = zephyr.Enabled
 					gss = scythe.Enabled
 					gssv = scythespeed.Value
-					if scythe.Enabled then
+						-[[
+											
+						if scythe.Enabled then
 						local item = getItemNear("scythe")
 						if item and not isnuking then switchItem(item) end
 						if item and lplr.Character.HandInvItem.Value == item.tool and bedwars.CombatController then 
@@ -9809,6 +9814,8 @@ run(function()
 							store.holdingscythe = false
 							store.scythe = 0
 						end
+
+											--]]
 					end
 					if client.Enabled then
 						if lplr.PlayerScripts.Modules:FindFirstChild("anticheat") then
