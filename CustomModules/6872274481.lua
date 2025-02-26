@@ -9760,7 +9760,7 @@ run(function()
 	end)
 	--warn('executed')
 end)
-[[-
+--[[
 run(function()
 	local ScytheExploit = {Enabled = false}
 	ScytheExploit = vape.windows.exploit.CreateOptionsButton({
@@ -9770,7 +9770,7 @@ run(function()
 		end
 	})
 end)
-		-]]
+		--]]
 
 		--patched uwu
 run(function()
@@ -9788,7 +9788,7 @@ run(function()
 					gsz = zephyr.Enabled
 					gss = scythe.Enabled
 					gssv = scythespeed.Value
-						-[[
+						--[[
 											
 						if scythe.Enabled then
 						local item = getItemNear("scythe")
